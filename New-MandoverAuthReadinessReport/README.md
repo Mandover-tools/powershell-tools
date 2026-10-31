@@ -38,6 +38,14 @@ Install-Module Microsoft.Graph.Authentication -Scope CurrentUser
 
 ## Instalación y uso
 
+> **Windows PowerShell 5.1: permitir la ejecución de scripts.** En Windows cliente, la política de ejecución viene en `Restricted` y bloquea todos los scripts, también los instalados desde la Gallery («la ejecución de scripts está deshabilitada en este sistema»). Se cambia una sola vez, sin ser administrador:
+>
+> ```powershell
+> Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+> ```
+>
+> Si `Get-ExecutionPolicy -List` muestra una política en `MachinePolicy` o `UserPolicy`, la impone una directiva de grupo y este comando no la cambia. Consulta con tu administrador. En PowerShell 7 no hace falta.
+
 Elige una de estas tres formas.
 
 ### 1. Instalarlo desde la PowerShell Gallery
@@ -47,7 +55,7 @@ Install-Script -Name New-MandoverAuthReadinessReport -Scope CurrentUser
 New-MandoverAuthReadinessReport
 ```
 
-Si es la primera vez que instalas un script, PowerShell puede preguntarte si quieres añadir la carpeta de scripts a la variable `PATH`. Responde que sí.
+El script instalado se ejecuta **por su nombre**, sin `.\` ni ruta. Si es la primera vez que instalas un script, PowerShell puede preguntarte si quieres añadir la carpeta de scripts a la variable `PATH`. Responde que sí y, si no lo reconoce, cierra y abre la ventana de PowerShell.
 
 ### 2. Solo descargar el fichero, sin instalarlo
 
@@ -122,7 +130,8 @@ Después de cada fecha, quien solo tenga SMS o voz tendrá que registrar un pass
 | Mensaje | Causa y solución |
 |---|---|
 | «no está firmado digitalmente» | Windows marca los ficheros descargados con el navegador. Ejecuta `Unblock-File` sobre el fichero. |
-| «la ejecución de scripts está deshabilitada» | Política de ejecución `Restricted`. Mira `Get-ExecutionPolicy -List`. Si no la impone una GPO, `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`. |
+| «la ejecución de scripts está deshabilitada» | Política de ejecución `Restricted`. Mira `Get-ExecutionPolicy -List`. Si no la impone una directiva de grupo, ejecuta `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned`. |
+| «no se reconoce el término New-MandoverAuthReadinessReport» | La carpeta de scripts no está en el `PATH` de esta ventana. Cierra y abre PowerShell, o ejecuta el script con su ruta completa. |
 | «Falta el módulo Microsoft.Graph.Authentication» | Instálalo desde la misma ventana de PowerShell que usas para ejecutar el script. |
 | «No se puede crear un canal seguro SSL/TLS» al usar `Install-Script` o `Save-Script` | Windows PowerShell 5.1 con PowerShellGet antiguo. Ejecuta primero `[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12` o usa PowerShell 7. |
 | Error de ensamblado (assembly) al iniciar sesión | Conflicto con otros módulos cargados (Exchange Online, Az…). Abre una ventana nueva y ejecuta `Update-Module Microsoft.Graph.Authentication`. |
