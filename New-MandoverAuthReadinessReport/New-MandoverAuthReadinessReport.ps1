@@ -14,7 +14,7 @@
 
 .LICENSEURI
 
-.PROJECTURI https://mandover.com
+https://github.com/mandover-tools/powershell-tools/tree/main/New-MandoverAuthReadinessReport
 
 .ICONURI
 
