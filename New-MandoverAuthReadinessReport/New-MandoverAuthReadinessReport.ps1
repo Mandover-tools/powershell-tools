@@ -12,9 +12,9 @@
 
 .TAGS Entra EntraID MFA Authentication Passkeys FIDO2 SMS Voice Microsoft365 M365 Graph Report Security Mandover Windows
 
-.LICENSEURI
+.LICENSEURI https://github.com/mandover-tools/powershell-tools/blob/main/LICENSE
 
-.PROJECTURI https://mandover.com
+.PROJECTURI https://github.com/mandover-tools/powershell-tools/tree/main/New-MandoverAuthReadinessReport
 
 .ICONURI
 
@@ -25,7 +25,7 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
-1.0.1 - The report now covers internal users (tenant members) only; guest accounts are always left out. Removed the phishing-resistant card. Notice wording aligned with Microsoft's documentation.
+1.0.1 - The report now covers internal users (tenant members) only; guest accounts are always left out. Removed the phishing-resistant card. Notice wording aligned with Microsoft's documentation. Released under the MIT license.
 1.0.0 - First public release. Readiness report for Microsoft's retirement of SMS and voice authentication in Entra ID.
 
 .PRIVATEDATA
@@ -70,7 +70,8 @@
 .NOTES
     Delegated permission: AuditLog.Read.All (the minimum documented by Microsoft for userRegistrationDetails). An administrator must grant consent the first time.
     Roles: Reports Reader, Security Reader, Security Administrator, Global Reader or higher.
-    License: Microsoft Entra ID P1 or P2.
+    Microsoft license required: Microsoft Entra ID P1 or P2.
+    Script license: MIT.
     Module: Microsoft.Graph.Authentication (the full Microsoft Graph SDK is not needed).
     Save this file as UTF-8 with BOM for Windows PowerShell 5.1.
 

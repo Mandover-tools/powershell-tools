@@ -159,6 +159,12 @@ Después de cada fecha, quien solo tenga SMS o voz tendrá que registrar un pass
 | «no tiene licencia Microsoft Entra ID P1 o P2» | Microsoft exige P1 o P2 para este informe. |
 | 403 de acceso denegado | Falta el consentimiento de `AuditLog.Read.All` o el rol de la cuenta. |
 
+## Licencia
+
+Distribuido bajo licencia [MIT](https://github.com/mandover-tools/powershell-tools/blob/main/LICENSE). Puedes usar, copiar y adaptar el script libremente, conservando el aviso de copyright.
+
+El nombre y el logotipo de Mandover son marcas de Mandover y **no se licencian** con este código.
+
 ## Sobre Mandover
 
 Este informe es solo el principio. [Mandover](https://mandover.com) es una aplicación para administradores de entornos híbridos Microsoft 365 y Active Directory.
