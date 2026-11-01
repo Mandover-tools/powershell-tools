@@ -1,6 +1,6 @@
 ﻿<#PSScriptInfo
 
-.VERSION 1.0.1
+.VERSION 1.0.2
 
 .GUID e99f000c-55df-47ff-924f-325ce262a09e
 
@@ -25,6 +25,7 @@
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+1.0.2 - The days-left counter now uses local calendar days (it changed at 01:00 Spanish time instead of midnight).
 1.0.1 - The report now covers internal users (tenant members) only; guest accounts are always left out. Removed the phishing-resistant card. Notice wording aligned with Microsoft's documentation. Released under the MIT license.
 1.0.0 - First public release. Readiness report for Microsoft's retirement of SMS and voice authentication in Entra ID.
 
@@ -524,7 +525,7 @@ const ADMINS = DATA.filter(u => u.admin).length;
 const pct = (n, d) => (d ? (n / d * 100).toFixed(1) : '0.0') + '%';
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num = n => n.toLocaleString(lang === 'en' ? 'en-GB' : 'es-ES');
-const daysTo = (y, m, d) => Math.ceil((Date.UTC(y, m, d) - Date.now()) / 864e5);
+const daysTo = (y, m, d) => { const n = new Date(); return Math.round((Date.UTC(y, m, d) - Date.UTC(n.getFullYear(), n.getMonth(), n.getDate())) / 864e5); };
 
 const CARDS = ['all', 'ready', 'smsOnly', 'noMfa', 'adminSms'];
 const titleFor = key => F[key] ? t('c_' + key) : mlabel(key.slice(key.indexOf(':') + 1));
