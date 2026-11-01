@@ -11,12 +11,12 @@ Microsoft retira el SMS y la voz propios de Entra ID. Quien solo tenga SMS o voz
 Un único fichero HTML, sin dependencias externas, con:
 
 - Un aviso con las fechas publicadas por Microsoft y los días que quedan.
-- Tarjetas: usuarios analizados, **preparados**, **solo SMS o voz**, **sin ningún método MFA**, **admins que dependen solo de SMS o voz** y **resistentes a phishing**.
+- Tarjetas: usuarios analizados, **preparados**, **solo SMS o voz**, **sin ningún método MFA** y **admins que dependen solo de SMS o voz**.
 - Una barra de preparación y las barras de usuarios por método de autenticación.
 - Al pulsar cualquier tarjeta, tramo o método, la **lista de usuarios**, con buscador.
 - Interruptor ES / EN dentro del propio informe.
 
-Es de solo lectura: no cambia nada en el tenant.
+Analiza a los usuarios internos (miembros del tenant); las cuentas de invitado quedan fuera. Es de solo lectura: no cambia nada en el tenant.
 
 ## Requisitos
 
@@ -36,7 +36,7 @@ Instalación del módulo (solo la primera vez):
 Install-Module Microsoft.Graph.Authentication -Scope CurrentUser
 ```
 
-## Instalación y uso
+## Instalación
 
 > **Windows PowerShell 5.1: permitir la ejecución de scripts.** En Windows cliente, la política de ejecución viene en `Restricted` y bloquea todos los scripts, también los instalados desde la Gallery («la ejecución de scripts está deshabilitada en este sistema»). Se cambia una sola vez, sin ser administrador:
 >
@@ -46,42 +46,62 @@ Install-Module Microsoft.Graph.Authentication -Scope CurrentUser
 >
 > Si `Get-ExecutionPolicy -List` muestra una política en `MachinePolicy` o `UserPolicy`, la impone una directiva de grupo y este comando no la cambia. Consulta con tu administrador. En PowerShell 7 no hace falta.
 
-Elige una de estas tres formas.
+Elige una de estas tres formas de obtener el script. Después, sigue en «Cómo ejecutarlo».
 
 ### 1. Instalarlo desde la PowerShell Gallery
 
 ```powershell
 Install-Script -Name New-MandoverAuthReadinessReport -Scope CurrentUser
-New-MandoverAuthReadinessReport
 ```
 
-El script instalado se ejecuta **por su nombre**, sin `.\` ni ruta. Si es la primera vez que instalas un script, PowerShell puede preguntarte si quieres añadir la carpeta de scripts a la variable `PATH`. Responde que sí y, si no lo reconoce, cierra y abre la ventana de PowerShell.
+Si es la primera vez que instalas un script, PowerShell puede preguntarte si quieres añadir la carpeta de scripts a la variable `PATH`. Responde que sí y, si después no lo reconoce, cierra y abre la ventana de PowerShell.
 
 ### 2. Solo descargar el fichero, sin instalarlo
 
 ```powershell
 Save-Script -Name New-MandoverAuthReadinessReport -Path .\Mandover
-.\Mandover\New-MandoverAuthReadinessReport.ps1
 ```
 
-Descarga el script desde la Gallery a la carpeta que indiques. Puedes revisarlo y ejecutarlo cuando quieras, sin tocar el `PATH`.
+Descarga el script desde la Gallery a la carpeta que indiques. Puedes revisarlo antes de ejecutarlo, sin tocar el `PATH`.
 
 ### 3. Descargarlo desde GitHub
 
 1. Entra en la [carpeta del script en GitHub](https://github.com/mandover-tools/powershell-tools/tree/main/New-MandoverAuthReadinessReport).
 2. Abre `New-MandoverAuthReadinessReport.ps1` y pulsa el botón de descarga (*Download raw file*).
-3. Desbloquea el fichero y ejecútalo:
+3. Desbloquea el fichero:
 
 ```powershell
 Unblock-File .\New-MandoverAuthReadinessReport.ps1
-.\New-MandoverAuthReadinessReport.ps1
 ```
 
 Windows marca como bloqueados los ficheros que se descargan con el navegador. Sin `Unblock-File`, Windows PowerShell 5.1 puede negarse a ejecutarlo con el mensaje «no está firmado digitalmente».
 
----
+## Cómo ejecutarlo
 
-Se abre una ventana de inicio de sesión de Microsoft. Al terminar se guarda el HTML en `Documentos\Mandover` y se abre en el navegador.
+Abre una ventana de PowerShell (no hace falta que sea de administrador) y ejecuta el comando que corresponda a cómo lo obtuviste:
+
+| Cómo lo obtuviste | Comando |
+|---|---|
+| 1. `Install-Script` | `New-MandoverAuthReadinessReport` (por su nombre, desde cualquier carpeta, sin `.\`) |
+| 2. `Save-Script` o 3. GitHub | `.\New-MandoverAuthReadinessReport.ps1` (desde la carpeta donde está el fichero) |
+
+Qué ocurre al ejecutarlo:
+
+1. Comprueba que tienes el módulo `Microsoft.Graph.Authentication`. Si falta, te dice cómo instalarlo.
+2. Se abre una ventana de **inicio de sesión de Microsoft**. Entra con una cuenta que cumpla los requisitos. La primera vez, un administrador tiene que consentir el permiso `AuditLog.Read.All`.
+3. Lee el informe de métodos de autenticación y muestra en consola cuántos usuarios analiza y cuántos invitados deja fuera.
+4. Guarda el informe HTML en `Documentos\Mandover` y lo abre en el navegador.
+
+Ejemplos con parámetros:
+
+```powershell
+New-MandoverAuthReadinessReport -Language en
+New-MandoverAuthReadinessReport -OutputFolder "C:\Informes" -NoOpen
+```
+
+Si prefieres no usar la consola, también puedes hacer clic derecho sobre el `.ps1` descargado y elegir «Ejecutar con PowerShell»: la ventana espera a que pulses Intro antes de cerrarse para que puedas leer los mensajes. Para eso, la política de ejecución tiene que estar ya configurada (ver el aviso al principio de «Instalación»).
+
+### Parámetros
 
 | Parámetro | Para qué sirve |
 |---|---|
@@ -103,7 +123,7 @@ Se abre una ventana de inicio de sesión de Microsoft. Al terminar se guarda el 
 - **Solo SMS o voz:** su único MFA es telefónico. El correo y las preguntas de seguridad no cuentan, porque solo sirven para el restablecimiento de contraseña.
 - **Sin MFA:** ningún método MFA registrado.
 - Los tres grupos suman el total de usuarios analizados.
-- **Resistente a phishing:** FIDO2, passkey, Windows Hello for Business o certificado. Microsoft Authenticator no cuenta.
+- El informe cuenta **métodos registrados**, no el método que cada usuario utiliza. Que un usuario tenga otro método registrado no garantiza que las políticas de tu tenant le permitan usarlo.
 
 ## Calendario de Microsoft
 
@@ -112,7 +132,7 @@ Según la [documentación de Microsoft](https://learn.microsoft.com/en-us/entra/
 | Fecha | Qué ocurre |
 |---|---|
 | 1 de septiembre de 2026 | Los passkeys pasan a ser el método por defecto. |
-| 1 de febrero de 2027 | Se retiran el SMS y la voz para usuarios internos e invitados internos. |
+| 1 de febrero de 2027 | Se retiran el SMS y la voz para todos los usuarios, excepto Global Administrators y usuarios externos. |
 | 1 de julio de 2027 | Se retiran para Global Administrators y usuarios externos. |
 
 Después de cada fecha, quien solo tenga SMS o voz tendrá que registrar un passkey. **Confirma las fechas en la documentación de Microsoft**, porque pueden cambiar.
@@ -123,6 +143,7 @@ Después de cada fecha, quien solo tenga SMS o voz tendrá que registrar un pass
 - Los datos pueden tener **hasta 36 horas de retraso**.
 - El informe **no refleja el MFA aplicado fuera de Microsoft Entra ID** (proveedor externo o federado). En esos tenants, «Sin MFA» puede salir inflado.
 - El informe de Microsoft agrupa SMS y voz bajo el método teléfono y **no los distingue**.
+- **Solo analiza usuarios internos (miembros del tenant). Las cuentas de invitado se excluyen siempre**, y el informe indica cuántas ha dejado fuera. Los invitados de otras organizaciones suelen registrar sus métodos en su propio tenant y aparecerían como «Sin MFA» aunque no lo estén. Ten en cuenta que Microsoft también aplica la fecha de febrero a los invitados que tienen cuenta propia en tu directorio, y esos tampoco se incluyen.
 - «Admin» significa que la cuenta tiene algún rol de administrador. No distingue Global Administrators del resto.
 
 ## Problemas frecuentes
@@ -146,6 +167,6 @@ Este informe es solo el principio. [Mandover](https://mandover.com) es una aplic
 
 ## English summary
 
-**New-MandoverAuthReadinessReport** is a free, read-only PowerShell script that generates a self-contained HTML report showing how many users in your Microsoft Entra tenant are ready for Microsoft's retirement of SMS and voice authentication, and who is not. It needs Entra ID P1 or P2, PowerShell 5.1 or 7, the `Microsoft.Graph.Authentication` module and the delegated `AuditLog.Read.All` permission. It runs locally, sends no data anywhere except to Microsoft Graph, and has no telemetry. Microsoft leaves disabled and recently deleted accounts out of the report, data can lag by up to 36 hours, and MFA enforced outside Entra ID is not reflected.
+**New-MandoverAuthReadinessReport** is a free, read-only PowerShell script that generates a self-contained HTML report showing how many users in your Microsoft Entra tenant are ready for Microsoft's retirement of SMS and voice authentication, and who is not. It needs Entra ID P1 or P2, PowerShell 5.1 or 7, the `Microsoft.Graph.Authentication` module and the delegated `AuditLog.Read.All` permission. It runs locally, sends no data anywhere except to Microsoft Graph, and has no telemetry. It analyses internal users (tenant members) only; guest accounts are always left out. Microsoft leaves disabled and recently deleted accounts out of the report, data can lag by up to 36 hours, and MFA enforced outside Entra ID is not reflected.
 
 Install with `Install-Script -Name New-MandoverAuthReadinessReport -Scope CurrentUser`, download only with `Save-Script -Name New-MandoverAuthReadinessReport -Path .\Mandover`, or download the `.ps1` from GitHub and run `Unblock-File` on it before use.

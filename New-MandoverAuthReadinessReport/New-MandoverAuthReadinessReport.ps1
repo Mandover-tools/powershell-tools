@@ -1,6 +1,6 @@
 ﻿<#PSScriptInfo
 
-.VERSION 1.0.0
+.VERSION 1.0.1
 
 .GUID e99f000c-55df-47ff-924f-325ce262a09e
 
@@ -14,7 +14,7 @@
 
 .LICENSEURI
 
-https://github.com/mandover-tools/powershell-tools/tree/main/New-MandoverAuthReadinessReport
+.PROJECTURI https://mandover.com
 
 .ICONURI
 
@@ -25,6 +25,7 @@ https://github.com/mandover-tools/powershell-tools/tree/main/New-MandoverAuthRea
 .EXTERNALSCRIPTDEPENDENCIES
 
 .RELEASENOTES
+1.0.1 - The report now covers internal users (tenant members) only; guest accounts are always left out. Removed the phishing-resistant card. Notice wording aligned with Microsoft's documentation.
 1.0.0 - First public release. Readiness report for Microsoft's retirement of SMS and voice authentication in Entra ID.
 
 .PRIVATEDATA
@@ -42,11 +43,11 @@ https://github.com/mandover-tools/powershell-tools/tree/main/New-MandoverAuthRea
     and writes a single HTML file with no external dependencies. It answers one question: how many users are ready for
     Microsoft's retirement of SMS and voice authentication, and who is not.
       - Notice with Microsoft's published dates and the days left.
-      - Cards: ready users, SMS or voice only, no MFA, admins relying only on SMS or voice, and phishing-resistant users.
+      - Cards: ready users, SMS or voice only, no MFA, and admins relying only on SMS or voice.
         Every card, bar segment and method opens the list of users.
       - ES / EN switch inside the report.
     Read-only: it changes nothing in the tenant. It runs locally and sends no data anywhere except to Microsoft Graph.
-    Microsoft leaves disabled and recently deleted accounts out of this report.
+    Microsoft leaves disabled and recently deleted accounts out of this report. Only internal users (tenant members) are analysed; guest accounts are always left out.
 
 .PARAMETER OutputFolder
     Folder where the HTML file is saved. Default: Documents\Mandover
@@ -280,7 +281,13 @@ try {
         }
     }
     $users = @($users)
+    # Solo usuarios internos (miembros del tenant): los invitados se excluyen siempre.
+    $guestsExcluded = @($users | Where-Object { $_.type -eq 'guest' }).Count
+    $users = @($users | Where-Object { $_.type -ne 'guest' })
     Write-Host ("Usuarios analizados: {0}" -f $users.Count) -ForegroundColor Green
+    if ($guestsExcluded -gt 0) {
+        Write-Host ("Invitados excluidos: {0}" -f $guestsExcluded) -ForegroundColor DarkGray
+    }
 }
 finally {
     Disconnect-MgGraph -ErrorAction SilentlyContinue | Out-Null
@@ -296,6 +303,7 @@ $meta = [pscustomobject]@{
     lang                 = $Language
     taglineEs            = $TaglineEs
     taglineEn            = $TaglineEn
+    guestsExcluded       = [int]$guestsExcluded
 }
 
 # Logotipo de Mandover (PNG recortado, incrustado en base64 para que el HTML sea un único fichero)
@@ -425,21 +433,21 @@ const L = {
   tagline:'Este panel es solo el principio. Descubre todo lo que Mandover puede hacer por tu entorno M365 y AD.',
   title:'Preparación para la retirada de SMS y voz', sub:'Autenticación del tenant', generated:'Generado', tenant:'Tenant',
   scopeNote:'Microsoft no incluye en este informe las cuentas deshabilitadas ni las eliminadas recientemente',
+  guestNote:'Solo usuarios internos (miembros del tenant). Invitados excluidos: {n}',
   hintClick:'Pulsa una tarjeta, un tramo de la barra o un método para ver qué usuarios son.',
   b_title:'Microsoft retira el SMS y la voz propios de Entra ID',
   b_text:'Quien solo tenga SMS o voz como MFA tendrá que registrar un passkey para seguir iniciando sesión. El aviso será bloqueante y sin opción de omitirlo.',
-  b_who1:'Usuarios internos e invitados internos', b_who2:'Global Administrators y usuarios externos', b_d1:'1 feb 2027', b_d2:'1 jul 2027', b_days:'días', b_done:'Ya vigente', b_more:'Ver el calendario de Microsoft',
+  b_who1:'Todos los usuarios, excepto Global Administrators y usuarios externos', b_who2:'Global Administrators y usuarios externos', b_d1:'1 feb 2027', b_d2:'1 jul 2027', b_days:'días', b_done:'Ya vigente', b_more:'Ver el calendario de Microsoft',
   s_summary:'Estado del tenant', s_ready:'Preparación para el 1 de febrero de 2027', s_methods:'Usuarios por método de autenticación',
-  c_all:'Usuarios analizados', c_ready:'Preparados', c_smsOnly:'Dependen solo de SMS o voz', c_noMfa:'Sin ningún método MFA', c_adminSms:'Admins que dependen solo de SMS o voz', c_phish:'Resistentes a phishing',
+  c_all:'Usuarios analizados', c_ready:'Preparados', c_smsOnly:'Dependen solo de SMS o voz', c_noMfa:'Sin ningún método MFA', c_adminSms:'Admins que dependen solo de SMS o voz',
   l_ready:'Preparados', l_smsOnly:'Solo SMS o voz', l_noMfa:'Sin MFA',
   h_all:'Cuentas incluidas en el análisis.',
   h_ready:'Tienen al menos un método MFA que no es SMS ni voz (Authenticator, app OATH, token, FIDO2, passkey, Windows Hello o certificado).',
   h_smsOnly:'Su único MFA disponible es SMS o llamada de voz. El correo y las preguntas de seguridad no cuentan, porque solo sirven para SSPR. Tendrán que registrar un passkey.',
   h_noMfa:'No tienen ningún método MFA registrado. Para registrar un passkey hace falta pasar antes por MFA, así que son los más difíciles de migrar.',
   h_adminSms:'Cuentas con rol de administrador cuyo único MFA es SMS o voz. Son la prioridad.',
-  h_phish:'FIDO2, passkey, Windows Hello for Business o certificado. Microsoft Authenticator no cuenta.',
   ok:'OK', review:'Revisar', critical:'Crítico', ofUsers:'de los usuarios', ofAdmins:'de los administradores',
-  weak:'SMS / voz', phishTag:'Anti-phishing',
+  weak:'SMS / voz',
   search:'Buscar por nombre o UPN…', close:'Cerrar', showing:'Mostrando {a} de {b}', cap:'Se muestran los primeros {n}; usa el buscador para acotar.',
   noRows:'No hay usuarios en esta lista.',
   col_name:'Nombre', col_upn:'UPN', col_type:'Tipo', col_admin:'Admin', col_methods:'Métodos registrados', col_updated:'Informe actualizado',
@@ -452,21 +460,21 @@ const L = {
   tagline:'This panel is just the beginning. Discover everything Mandover can do for your M365 and AD environment.',
   title:'SMS and voice retirement readiness', sub:'Tenant authentication', generated:'Generated', tenant:'Tenant',
   scopeNote:'Microsoft leaves disabled and recently deleted accounts out of this report',
+  guestNote:'Internal users only (tenant members). Guests excluded: {n}',
   hintClick:'Click a card, a bar segment or a method to see which users they are.',
   b_title:'Microsoft is retiring its own SMS and voice authentication in Entra ID',
   b_text:'Anyone whose only MFA is SMS or voice will have to register a passkey to keep signing in. The prompt will be blocking, with no way to skip it.',
-  b_who1:'Internal users and internal guests', b_who2:'Global Administrators and external users', b_d1:'1 Feb 2027', b_d2:'1 Jul 2027', b_days:'days', b_done:'Already in effect', b_more:"See Microsoft's timeline",
+  b_who1:'All users except Global Administrators and external users', b_who2:'Global Administrators and external users', b_d1:'1 Feb 2027', b_d2:'1 Jul 2027', b_days:'days', b_done:'Already in effect', b_more:"See Microsoft's timeline",
   s_summary:'Tenant status', s_ready:'Readiness for 1 February 2027', s_methods:'Users by authentication method',
-  c_all:'Users analysed', c_ready:'Ready', c_smsOnly:'Rely only on SMS or voice', c_noMfa:'No MFA method at all', c_adminSms:'Admins relying only on SMS or voice', c_phish:'Phishing-resistant',
+  c_all:'Users analysed', c_ready:'Ready', c_smsOnly:'Rely only on SMS or voice', c_noMfa:'No MFA method at all', c_adminSms:'Admins relying only on SMS or voice',
   l_ready:'Ready', l_smsOnly:'SMS or voice only', l_noMfa:'No MFA',
   h_all:'Accounts included in the analysis.',
   h_ready:'Have at least one MFA method that is not SMS or voice (Authenticator, OATH app, token, FIDO2, passkey, Windows Hello or certificate).',
   h_smsOnly:'Their only available MFA is SMS or a voice call. Email and security questions do not count, because they only work for SSPR. They will have to register a passkey.',
   h_noMfa:'No MFA method registered. Registering a passkey requires passing MFA first, so they are the hardest to migrate.',
   h_adminSms:'Admin-role accounts whose only MFA is SMS or voice. These are the priority.',
-  h_phish:'FIDO2, passkey, Windows Hello for Business or certificate. Microsoft Authenticator does not count.',
   ok:'OK', review:'Review', critical:'Critical', ofUsers:'of users', ofAdmins:'of admins',
-  weak:'SMS / voice', phishTag:'Phishing-resistant',
+  weak:'SMS / voice',
   search:'Search by name or UPN…', close:'Close', showing:'Showing {a} of {b}', cap:'Showing the first {n}; use the search box to narrow down.',
   noRows:'There are no users in this list.',
   col_name:'Name', col_upn:'UPN', col_type:'Type', col_admin:'Admin', col_methods:'Registered methods', col_updated:'Report updated',
@@ -490,9 +498,7 @@ const ML = {
 const mlabel = m => ML[m] ? ML[m][lang === 'en' ? 1 : 0] : m;
 const WEAK = {mobilePhone:1, alternateMobilePhone:1, officePhone:1};
 const NONMFA = {email:1, securityQuestion:1, temporaryAccessPass:1};
-const isPhish = m => m === 'fido2' || m === 'windowsHelloForBusiness' || m.indexOf('passKey') === 0 || m.indexOf('certificateBased') === 0;
 const mfaM = u => u.methods.filter(m => !NONMFA[m]);
-const hasPhish = u => u.methods.some(isPhish);
 const isReady = u => mfaM(u).some(m => !WEAK[m]);
 const isSmsOnly = u => { const m = mfaM(u); return m.length > 0 && m.every(x => WEAK[x]); };
 const isNoMfa = u => mfaM(u).length === 0;
@@ -502,8 +508,7 @@ const F = {
  ready: isReady,
  smsOnly: isSmsOnly,
  noMfa: isNoMfa,
- adminSms: u => u.admin && isSmsOnly(u),
- phish: hasPhish
+ adminSms: u => u.admin && isSmsOnly(u)
 };
 function filt(key){
  if (F[key]) return F[key];
@@ -520,7 +525,7 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp
 const num = n => n.toLocaleString(lang === 'en' ? 'en-GB' : 'es-ES');
 const daysTo = (y, m, d) => Math.ceil((Date.UTC(y, m, d) - Date.now()) / 864e5);
 
-const CARDS = ['all', 'ready', 'smsOnly', 'noMfa', 'adminSms', 'phish'];
+const CARDS = ['all', 'ready', 'smsOnly', 'noMfa', 'adminSms'];
 const titleFor = key => F[key] ? t('c_' + key) : mlabel(key.slice(key.indexOf(':') + 1));
 
 function card(key){
@@ -565,7 +570,7 @@ function methodRows(){
  DATA.forEach(u => u.methods.forEach(m => { tally[m] = (tally[m] || 0) + 1; }));
  return Object.keys(tally).sort((a, b) => tally[b] - tally[a]).map(m => {
   const n = tally[m], w = n > 0 ? Math.max(1, n / (TOTAL || 1) * 100) : 0;
-  const tg = isPhish(m) ? '<span class="mini ok">' + t('phishTag') + '</span>' : (WEAK[m] ? '<span class="mini warn">' + t('weak') + '</span>' : '');
+  const tg = WEAK[m] ? '<span class="mini warn">' + t('weak') + '</span>' : '';
   return '<button class="brow" data-k="m:' + esc(m) + '"><span class="bl">' + esc(mlabel(m)) + tg + '</span>' +
    '<span class="track"><span class="fill" style="width:' + w.toFixed(1) + '%"></span></span><span class="bn">' + num(n) + ' · ' + pct(n, TOTAL) + '</span></button>';
  }).join('');
@@ -575,7 +580,7 @@ function render(){
  document.documentElement.lang = lang;
  document.title = 'Mandover · ' + t('title');
  const tagline = (lang === 'en' ? META.taglineEn : META.taglineEs) || t('tagline');
- const scope = t('scopeNote');
+ const scope = t('scopeNote') + ' · ' + t('guestNote').replace('{n}', num(META.guestsExcluded || 0));
  document.getElementById('app').innerHTML =
   '<header><div class="top"><div class="brandrow">' +
   '<a class="logo-link" href="' + SITE + '" target="_blank" rel="noopener noreferrer" aria-label="Mandover"><img class="logo" src="' + LOGO + '" alt="Mandover"></a>' +
