@@ -40,7 +40,7 @@
     Generates a self-contained HTML report showing how ready a Microsoft Entra tenant is for the retirement of SMS and voice authentication.
 
 .DESCRIPTION
-    Reads the authentication methods registration report from Microsoft Graph (reports/authenticationMethods/userRegistrationDetails)
+    - Reads the authentication methods registration report from Microsoft Graph (reports/authenticationMethods/userRegistrationDetails)
     and writes a single HTML file with no external dependencies. It answers one question: how many users are ready for
     Microsoft's retirement of SMS and voice authentication, and who is not.
       - Notice with Microsoft's published dates and the days left.
